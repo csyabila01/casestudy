@@ -37,70 +37,34 @@ def main():
         return
    
    
-    year = st.selectbox("Select Year", sorted(data["Year"].dropna().unique()), key="s1")
+    # Filters with 'All' option
+    year_options = ["All"] + sorted(data["Year"].dropna().unique().tolist())
+    time_options = ["All"] + sorted(data["time_of_sale"].dropna().unique().tolist())
 
+    year = st.selectbox("Select Year", year_options, key="s1")
+    time = st.selectbox("Select Time of Sale", time_options, key="s2")
 
-    # Layout: Sprint 1 and Sprint 2 side by side
-    col1, col2 = st.columns(2)
+    # Apply filters
+    filtered = data.copy()
+    if year != "All":
+        filtered = filtered[filtered["Year"] == int(year)]
+    if time != "All":
+        filtered = filtered[filtered["time_of_sale"] == time]
 
+    # -----------------------------
+    # Combined Barchart (Sprint 1 & 2)
+    # -----------------------------
+    st.subheader("Total Sales by Item Type")
+    grouped = filtered.groupby("item_type")["total_amount"].sum().reset_index().sort_values(by="total_amount", ascending=False)
+    st.metric("Total Sales (₹)", f"{filtered['total_amount'].sum():,.0f}")
+    fig = px.bar(grouped, x="item_type", y="total_amount",
+                 labels={"item_type": "Item Type", "total_amount": "Total Sales (₹)"},
+                 title=f"Sales by Item Type ({year if year != 'All' else 'All Years'}, {time if time != 'All' else 'All Times'})")
+    st.plotly_chart(fig, use_container_width=True)
 
-
-
-# -----------------------------
-# Sprint 1 - MVD
-# -----------------------------
-    with col1:
-        st.subheader("Total Sales by Item Type")
-
-
-        filtered = data[data["Year"] == year]
-        grouped = filtered.groupby("item_type")["total_amount"].sum().reset_index().sort_values(by="total_amount", ascending=False)
-
-
-        st.metric("Total Sales (₹)", f"{filtered['total_amount'].sum():,.0f}")
-
-
-        fig = px.bar(
-            grouped,
-            x="item_type",
-            y="total_amount",
-            labels={"item_type": "Item Type", "total_amount": "Total Sales (₹)"},
-            title=f"Total Sales by Item Type for {year}"
-        )
-        st.plotly_chart(fig, use_container_width=True)
-
-# -----------------------------
-# Sprint 2 - Add Time Filter
-# -----------------------------
-    with col2:
-        st.subheader("🕒 Sales by Time of Day")
-        available_times = sorted(data["time_of_sale"].dropna().unique())
-        selected_time = st.selectbox("Select Time of Sale", available_times)
-
-
-
-
-        filtered2 = data[(data["Year"] == year) & (data["time_of_sale"] == selected_time)]
-        grouped2 = filtered2.groupby("item_type")["total_amount"].sum().reset_index().sort_values(by="total_amount", ascending=False)
-
-
-        st.metric("Total Sales (₹)", f"{filtered2['total_amount'].sum():,.0f}")
-
-
-        fig2 = px.bar(
-            grouped,
-            x="item_type",
-            y="total_amount",
-            labels={"item_type": "Item Type", "total_amount": "Total Sales (₹)"},
-            title=f"Sales by Item Type for {year} at {selected_time}"
-        )
-        st.plotly_chart(fig2, use_container_width=True)
-
-# -------------------------------------
-# Sprint 3 - Prediction of Total Sales
-# -------------------------------------
-
-
+    # -------------------------------------
+    # Sprint 3 - Prediction of Total Sales
+    # -------------------------------------
     st.subheader("Predict Total Sales for 2024")
     yearly_sales = data.groupby("Year")["total_amount"].sum().reset_index()
     model = LinearRegression()
@@ -109,7 +73,6 @@ def main():
     model.fit(X, y)
     predicted_2024 = model.predict([[2024]])[0]
     st.metric("Predicted Sales for 2024 (₹)", f"{predicted_2024:,.0f}")
-
 
 # Entry point for the Streamlit app
 if __name__ == "__main__":
