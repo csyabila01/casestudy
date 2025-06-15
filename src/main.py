@@ -23,22 +23,13 @@ def load_and_process_data(filepath="data/Balaji Fast Food Sales.csv", output_pat
         raise FileNotFoundError(f"Input file not found: {filepath}")
 
     df = pd.read_csv(filepath)
+    
+    df['date'] = df['date'].str.replace('/','-')
+    df['date'] = pd.to_datetime(df['date'],format = '%m-%d-%Y')
 
-    # Normalize column names to lowercase
-    df.columns = df.columns.str.lower()
-
-    # Check if 'date' exists
-    if "date" not in df.columns:
-        raise KeyError("Column 'date' not found in the dataset.")
-
-    # Standardize date format by replacing slashes with dashes
-    df["date"] = df["date"].astype(str).str.replace("/", "-")
-    df["date"] = pd.to_datetime(df["date"], errors='coerce', dayfirst=True)
-
-    # Parse date and extract year, hour
-    df["Year"] = df["date"].dt.year
-    df["Hour"] = df["date"].dt.hour
-
+    # Parse year from the date
+    df['Year'] = df['date'].dt.year
+    
     # Fill missing Transaction Types
     df["transaction_type"] = df["transaction_type"].fillna("Credit Card")
 
@@ -49,7 +40,7 @@ def load_and_process_data(filepath="data/Balaji Fast Food Sales.csv", output_pat
     output_path = os.path.abspath(output_path)
     try:
         df.to_csv(output_path, index=False)
-        print("Processed dataset saved successfully!")
+        print("Processed dataset are successfully saved")
     except Exception as e:
         print(f"❌ Failed to save file: {e}")
 
