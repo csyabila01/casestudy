@@ -24,15 +24,21 @@ def load_and_process_data(filepath="data/Balaji Fast Food Sales.csv", output_pat
 
     df = pd.read_csv(filepath)
 
+    # Normalize column names to lowercase
+    df.columns = df.columns.str.lower()
+
+    # Check if 'date' exists
+    if "date" not in df.columns:
+        raise KeyError("Column 'date' not found in the dataset.")
+
     # Standardize date format by replacing slashes with dashes
     df["date"] = df["date"].astype(str).str.replace("/", "-")
-    df['date'] = pd.to_datetime(df['date'])
+    df["date"] = pd.to_datetime(df["date"], errors='coerce', dayfirst=True)
 
     # Parse date and extract year, hour
-    df["date"] = pd.to_datetime(df["date"], errors='coerce', dayfirst=True)
     df["Year"] = df["date"].dt.year
     df["Hour"] = df["date"].dt.hour
-    
+
     # Fill missing Transaction Types
     df["transaction_type"] = df["transaction_type"].fillna("Credit Card")
 
