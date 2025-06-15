@@ -23,14 +23,13 @@ def load_and_process_data(filepath="data/Balaji Fast Food Sales.csv", output_pat
         raise FileNotFoundError(f"Input file not found: {filepath}")
 
     df = pd.read_csv(filepath)
-    df.drop_duplicates(inplace=True)
-    print(f"Original dataset shape: {df.shape}")
 
     # Parse date and extract year, hour
-    df["date"] = pd.to_datetime(df["date"], errors='coerce')
-    df["Year"] = df["date"].dt.year
-    df["Hour"] = df["date"].dt.hour
-
+    df["date"] = pd.to_datetime(df["date"], errors='coerce', dayfirst=True)
+    df["date"] = df["date"].dt.strftime("%Y-%m-%d")
+    df["Year"] = pd.to_datetime(df["date"]).dt.year
+    df["Hour"] = pd.to_datetime(df["date"]).dt.hour
+    
     # Fill missing Transaction Types
     df["transaction_type"] = df["transaction_type"].fillna("Credit Card")
 
@@ -40,11 +39,10 @@ def load_and_process_data(filepath="data/Balaji Fast Food Sales.csv", output_pat
     # Save the processed dataset
     output_path = os.path.abspath(output_path)
     try:
-        print(f"Attempting to save to: {output_path}")
         df.to_csv(output_path, index=False)
-        print("Processed dataset saved successfully!")
+        print("✅ Missing 'transaction_type' values filled and saved.")
     except Exception as e:
-        print(f"Failed to save file. Error: {e}")
+        print(f"❌ Failed to save file: {e}")
 
     return df
 

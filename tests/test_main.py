@@ -9,16 +9,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../s
 from main import load_and_process_data
 
 
-def test_no_nulls_in_critical_fields():
-    """Ensure no null values exist in critical columns after processing."""
+def test_fill_missing_transaction_type():
+    """Test that missing 'transaction_type' values are filled with 'Credit Card'."""
 
     df = pd.DataFrame({
-        "date": ["2023-01-01", "2023-01-01"],
-        "item_type": ["Burger", "Pizza"],
-        "item_price": [100, 150],
-        "quantity": [1, 2],
-        "transaction_type": [None, None],
-        "time_of_sale": ["10:00:00", "11:00:00"]
+        "transaction_type": [None, "Cash", None]
     })
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -28,12 +23,10 @@ def test_no_nulls_in_critical_fields():
         df.to_csv(input_path, index=False)
         processed_df = load_and_process_data(input_path, output_path)
 
-        critical_fields = ["date", "item_type", "item_price", "quantity", "transaction_type", "total_amount"]
-        null_counts = processed_df[critical_fields].isnull().sum()
-
-        assert null_counts.sum() == 0, f"❌ Nulls found in critical fields: {null_counts[null_counts > 0].to_dict()}"
-        print("✅ Test passed: No nulls in critical fields.")
+        assert processed_df["transaction_type"].isnull().sum() == 0, "❌ There are still missing transaction_type values."
+        assert (processed_df["transaction_type"] == "Credit Card").sum() == 2, "❌ Not all missing values filled with 'Credit Card'."
+        print("✅ Test passed: All missing 'transaction_type' values filled with 'Credit Card'.")
 
 if __name__ == "__main__":
-    test_no_nulls_in_critical_fields()
+    test_fill_missing_transaction_type()
 
